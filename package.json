@@ -1,11 +1,34 @@
 {
   "name": "beaconbob",
   "displayName": "BeaconBob",
-  "description": "Zero-cloud LAN pair programming: peer discovery, chat, groups, and shared editing, entirely inside your local network.",
+  "description": "Zero-cloud pair programming on your LAN: discovery, encrypted chat and groups, live shared editing, and voice. No accounts, no servers.",
   "version": "0.1.0",
-  "publisher": "beaconbob",
-  "license": "UNLICENSED",
-  "private": true,
+  "publisher": "yassataiseer",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yassataiseer/beaconbob.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yassataiseer/beaconbob/issues"
+  },
+  "homepage": "https://github.com/yassataiseer/beaconbob#readme",
+  "galleryBanner": {
+    "color": "#1f2a44",
+    "theme": "dark"
+  },
+  "keywords": [
+    "pair programming",
+    "collaboration",
+    "live share",
+    "lan",
+    "offline",
+    "peer-to-peer",
+    "chat",
+    "voice",
+    "co-editing"
+  ],
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -104,8 +127,10 @@
     "typecheck": "tsc -p . --noEmit && tsc -p webview-ui --noEmit",
     "test": "vitest run",
     "test:vscode": "node test/vscode/run.mjs",
-    "package": "npm run build && npx --yes @vscode/vsce package --no-dependencies --allow-missing-repository --skip-license -o beaconbob.vsix",
-    "vscode:prepublish": "npm run build"
+    "package": "vsce package --no-dependencies -o beaconbob.vsix",
+    "publish:vsce": "vsce publish --no-dependencies --packagePath beaconbob.vsix",
+    "publish:ovsx": "ovsx publish beaconbob.vsix",
+    "vscode:prepublish": "node esbuild.mjs --production && npm run build:webview"
   },
   "dependencies": {
     "bonjour-service": "^1.4.4",
@@ -122,7 +147,9 @@
     "@types/vscode": "~1.90.0",
     "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^6.1.2",
+    "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.2",
+    "ovsx": "^1.2.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "typescript": "^5.9.3",

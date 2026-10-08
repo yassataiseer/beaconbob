@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      # CI runners have no usable multicast network or desktop Chrome; those tests run locally.
+      - run: npm test
+        env:
+          BEACONBOB_SKIP_MDNS: '1'
+          BEACONBOB_SKIP_BROWSER: '1'
+      - run: npm run package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: beaconbob-vsix
+          path: beaconbob.vsix

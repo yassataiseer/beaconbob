@@ -76,7 +76,9 @@ describe.skipIf(!canRun)('extension end to end (three processes)', () => {
   let carol: Host;
 
   beforeAll(async () => {
-    execSync('npm run build:ext', { cwd: root, stdio: 'ignore' });
+    // BEACONBOB_E2E_USE_BUILD=1 tests whatever is already in dist/ (for example the minified
+    // production bundle) instead of rebuilding.
+    if (!process.env.BEACONBOB_E2E_USE_BUILD) execSync('npm run build:ext', { cwd: root, stdio: 'ignore' });
     [alice, bob, carol] = await Promise.all([spawnHost('Alice'), spawnHost('Bob'), spawnHost('Carol')]);
     const names = ['Alice', 'Bob', 'Carol'];
     // Wait for the specific peers: other tests advertise on the same network at the same time.
