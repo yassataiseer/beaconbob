@@ -16,6 +16,7 @@ import type { FromWebview } from './ui/ipcTypes';
 import { buildUiState } from './ui/stateBuilder';
 import { SidebarProvider } from './ui/webviewProvider';
 import { SharingController } from './vscode/sharingController';
+import { VoiceFeature } from './vscode/voiceFeature';
 import { type Log, scoped } from './util/logger';
 import { getLocalAddresses, parsePortRange, type PortRange } from './util/network';
 
@@ -130,6 +131,29 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     log,
     onChange: () => refresh(),
   });
+  const nameOf = (peerId: string): string => {
+    if (peerId === identity.peerId) return displayName();
+    for (const g of groupHost.hosted()) {
+      const m = g.members.find((x) => x.peerId === peerId);
+      if (m) return m.name;
+    }
+    for (const g of member.joined()) {
+      const m = g.members.find((x) => x.peerId === peerId);
+      if (m) return m.name;
+    }
+    return peers.remote(peerId)?.name ?? registry.get(peerId)?.name ?? 'Someone';
+  };
+  const voice = new VoiceFeature({
+    extensionPath: context.extensionUri.fsPath,
+    peers,
+    groupHost,
+    member,
+    identity,
+    displayName,
+    nameOf,
+    log,
+    onChange: () => refresh(),
+  });
 
   const server = new SignalServer({
     identity,
@@ -178,10 +202,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       host: groupHost,
       member,
       sharingFor: (groupId, isHost) => sharing.view(groupId, isHost),
+      voiceFor: (kind, key) => voice.conversation(kind, key),
+      voice: voice.view(),
       error: lastError,
     });
-
-  const nameOf = (peerId: string) => peers.remote(peerId)?.name ?? registry.get(peerId)?.name ?? 'That peer';
 
   const connectTo = (peerId: string) => {
     lastError = null;
@@ -311,6 +335,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           fail((err as Error).message);
         }
         break;
+      case 'joinVoice':
+        lastError = null;
+        voice.join(msg.conversationId).catch((err: unknown) => fail((err as Error).message));
+        refresh();
+        break;
+      case 'leaveVoice':
+        voice.leave();
+        break;
+      case 'setMuted':
+        voice.setMuted(msg.muted);
+        break;
+      case 'openVoicePage':
+        voice.openPage().catch((err: unknown) => fail((err as Error).message));
+        break;
       case 'followPeer':
         sharing.follow(msg.groupId, msg.peerId).then(
           (ok) => {
@@ -416,6 +454,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     for (const off of unsubscribe) off();
     // Sharing and hosted groups are wound down first so members hear about it before the
     // sockets go.
+    voice.dispose();
     sharing.dispose();
     groupHost.dispose();
     member.dispose();

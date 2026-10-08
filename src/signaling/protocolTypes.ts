@@ -9,8 +9,8 @@ export const SIGNALING_VERSION = '1.0';
 export const MAX_FRAME_BYTES = 1024 * 1024;
 export const MAX_CHAT_LENGTH = 8000;
 
-export type ChannelName = 'lanChat' | 'lanCodeSync';
-export const CHANNEL_NAMES: readonly ChannelName[] = ['lanChat', 'lanCodeSync'];
+export type ChannelName = 'lanChat' | 'lanCodeSync' | 'lanVoice';
+export const CHANNEL_NAMES: readonly ChannelName[] = ['lanChat', 'lanCodeSync', 'lanVoice'];
 
 export type SignalingType =
   // Reserved for Phase 2 (WebRTC audio negotiation).

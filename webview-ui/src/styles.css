@@ -175,6 +175,66 @@ button.back {
   padding: 0 6px 2px 0;
 }
 
+.call-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 3px;
+  background: var(--vscode-editorWidget-background, rgba(127, 127, 127, 0.12));
+  border: 1px solid var(--vscode-testing-iconPassed, #3fb950);
+  font-size: 12px;
+}
+
+.call-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+button.link.call-title {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.call-warning {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  border-left: 2px solid var(--vscode-editorWarning-foreground, #d29922);
+  background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
+}
+
+.call-warning button {
+  align-self: flex-start;
+}
+
+.dot.dot-failed {
+  background: var(--vscode-errorForeground, #f85149);
+}
+
+.dot.speaking-dot {
+  background: var(--vscode-testing-iconPassed, #3fb950);
+  box-shadow: 0 0 0 3px rgba(63, 185, 80, 0.4);
+}
+
+.voice-actions {
+  align-items: center;
+}
+
+.tag.voice-tag {
+  color: #fff;
+  background: var(--vscode-testing-iconPassed, #3fb950);
+}
+
 .share-bar {
   display: flex;
 }

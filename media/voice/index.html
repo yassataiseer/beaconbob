@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BeaconBob voice</title>
+    <link rel="stylesheet" href="voice.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>BeaconBob voice</h1>
+        <p id="status" class="muted">Connecting to your editor…</p>
+      </header>
+
+      <section id="call" hidden>
+        <h2 id="title"></h2>
+        <ul id="participants"></ul>
+        <div class="actions">
+          <button id="mute" type="button">Mute</button>
+          <button id="leave" type="button" class="secondary">Leave call</button>
+        </div>
+      </section>
+
+      <section id="idle">
+        <p class="muted">Not in a call. Join one from the BeaconBob sidebar in your editor; this tab carries the audio.</p>
+      </section>
+
+      <button id="enable-sound" type="button" hidden>Click to hear the others</button>
+
+      <footer class="muted small">
+        Audio goes directly between browsers on your network, encrypted. Keep this tab open during calls.
+      </footer>
+    </main>
+    <script src="voice.js"></script>
+  </body>
+</html>

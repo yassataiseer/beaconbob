@@ -16,7 +16,13 @@ export function parseFromWebview(raw: unknown): FromWebview | undefined {
     case 'closeConversation':
     case 'stopSharing':
     case 'openSharedFiles':
+    case 'leaveVoice':
+    case 'openVoicePage':
       return { type: m.type };
+    case 'joinVoice':
+      return str(m.conversationId) ? { type: 'joinVoice', conversationId: m.conversationId } : undefined;
+    case 'setMuted':
+      return bool(m.muted) ? { type: 'setMuted', muted: m.muted } : undefined;
     case 'startSharing':
     case 'mountShared':
       return str(m.groupId) ? { type: m.type, groupId: m.groupId } : undefined;

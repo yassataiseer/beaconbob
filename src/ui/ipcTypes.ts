@@ -46,6 +46,38 @@ export interface ConversationSummary {
   /** Why the conversation can no longer be used, if it can't. */
   ended: string | null;
   isHost: boolean;
+  /** People in this conversation's voice call right now (including you). */
+  inCallCount: number;
+}
+
+export interface ConversationVoiceView {
+  /** Whether you are in this conversation's call. */
+  joined: boolean;
+  /** Names of the others in the call. */
+  others: string[];
+  canJoin: boolean;
+}
+
+export type MicStateView = 'unknown' | 'ok' | 'denied' | 'error';
+
+export interface VoiceParticipantView {
+  peerId: string;
+  name: string;
+  speaking: boolean;
+  state: 'connecting' | 'connected' | 'failed';
+}
+
+export interface VoiceView {
+  /** The call you are in, if any. */
+  call: { conversationId: string; title: string } | null;
+  pageConnected: boolean;
+  mic: MicStateView;
+  micMessage: string | null;
+  muted: boolean;
+  selfSpeaking: boolean;
+  participants: VoiceParticipantView[];
+  /** Set when the local voice server could not start. */
+  unavailable: string | null;
 }
 
 export interface MemberView {
@@ -98,6 +130,7 @@ export interface SharingView {
 export interface ConversationDetail extends ConversationSummary {
   /** Workspace sharing for this group (null for direct messages). */
   sharing: SharingView | null;
+  voice: ConversationVoiceView;
   messages: ChatMessageView[];
   typing: string[];
   canSend: boolean;
@@ -134,6 +167,7 @@ export interface UiState {
   publicGroups: PublicGroupView[];
   invitations: InvitationView[];
   joinRequests: JoinRequestView[];
+  voice: VoiceView;
   error: string | null;
 }
 
@@ -162,4 +196,8 @@ export type FromWebview =
   | { type: 'setCanEdit'; peerId: string; canEdit: boolean }
   | { type: 'openSharedFiles' }
   | { type: 'mountShared'; groupId: string }
-  | { type: 'followPeer'; groupId: string; peerId: string };
+  | { type: 'followPeer'; groupId: string; peerId: string }
+  | { type: 'joinVoice'; conversationId: string }
+  | { type: 'leaveVoice' }
+  | { type: 'setMuted'; muted: boolean }
+  | { type: 'openVoicePage' };

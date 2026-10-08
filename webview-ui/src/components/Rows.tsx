@@ -10,6 +10,7 @@ function ConversationRow({ conversation }: { conversation: ConversationSummary }
             {conversation.title}
             {conversation.isHost && <span className="tag">host</span>}
             {conversation.ended && <span className="tag muted-tag">ended</span>}
+            {conversation.inCallCount > 0 && <span className="tag voice-tag">{conversation.inCallCount} in call</span>}
           </span>
           <span className="muted small">{conversation.subtitle}</span>
         </span>

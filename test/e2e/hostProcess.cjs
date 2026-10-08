@@ -51,6 +51,7 @@ const vscode = {
   Uri: {
     joinPath: (base, ...parts) => uri(path.join(base.fsPath, ...parts)),
     file: (p) => uri(p),
+    parse: (s) => ({ toString: () => s }),
     from: ({ scheme, authority, path: p }) => ({ scheme, authority, path: p, toString: () => `${scheme}://${authority}${p}` }),
   },
   EventEmitter,
@@ -100,6 +101,12 @@ const vscode = {
     },
   },
   commands: { registerCommand: () => disposable, executeCommand: async () => undefined },
+  env: {
+    openExternal: async (target) => {
+      send('openExternal', { url: target.toString() });
+      return true;
+    },
+  },
   workspace: {
     name: `${process.env.BEACONBOB_DISPLAY_NAME}-workspace`,
     workspaceFolders: undefined,

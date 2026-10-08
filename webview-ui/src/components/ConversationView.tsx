@@ -1,12 +1,19 @@
 import { useState } from 'react';
-import type { ConversationDetail } from '../../../src/ui/ipcTypes';
+import type { ConversationDetail, VoiceView } from '../../../src/ui/ipcTypes';
 import { post } from '../hooks/useExtensionMessages';
+import { VoiceButton } from './CallBar';
 import { ChatPanel } from './ChatPanel';
 import { MemberList } from './MemberList';
 import { JoinRequestCard } from './Rows';
 import { SharingPanel } from './SharingPanel';
 
-export function ConversationView({ conversation }: { conversation: ConversationDetail }) {
+export function ConversationView({
+  conversation,
+  globalCall,
+}: {
+  conversation: ConversationDetail;
+  globalCall: VoiceView['call'];
+}) {
   const [showMembers, setShowMembers] = useState(false);
   const { groupId, isHost, ended } = conversation;
 
@@ -37,6 +44,20 @@ export function ConversationView({ conversation }: { conversation: ConversationD
           </button>
         )}
       </header>
+
+      {!ended && (conversation.kind === 'dm' || groupId) && (
+        <div className="actions conversation-actions voice-actions">
+          <VoiceButton
+            conversationId={conversation.id}
+            kind={conversation.kind}
+            voice={conversation.voice}
+            globalCall={globalCall}
+          />
+          {conversation.voice.others.length > 0 && !conversation.voice.joined && (
+            <span className="muted small">In the call: {conversation.voice.others.join(', ')}</span>
+          )}
+        </div>
+      )}
 
       {groupId && (
         <div className="actions conversation-actions">

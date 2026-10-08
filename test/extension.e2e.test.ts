@@ -20,6 +20,7 @@ interface Host {
   state: UiState | undefined;
   prompts: Array<{ message: string; detail: string }>;
   notifications: string[];
+  opened: string[];
   html: string;
   errors: string[];
   post(msg: FromWebview): void;
@@ -44,6 +45,7 @@ function spawnHost(name: string): Promise<Host> {
     state: undefined,
     prompts: [],
     notifications: [],
+    opened: [],
     html: '',
     errors: [],
     post: (msg) => child.send({ cmd: 'webview', msg }),
@@ -53,6 +55,7 @@ function spawnHost(name: string): Promise<Host> {
       if (m.event === 'state') host.state = m.state;
       else if (m.event === 'prompt') host.prompts.push({ message: m.message, detail: m.detail });
       else if (m.event === 'notify') host.notifications.push(m.message);
+      else if (m.event === 'openExternal') host.opened.push(m.url);
       else if (m.event === 'error') host.errors.push(m.message);
       else if (m.event === 'activated') {
         host.html = m.html;
@@ -118,6 +121,17 @@ describe.skipIf(!canRun)('extension end to end (three processes)', () => {
     await waitFor(() => alice.state!.active!.typing.includes('Bob'));
     bob.post({ type: 'sendMessage', conversationId: `dm:${aliceId}`, content: 'hey alice' });
     await waitFor(() => activeMessages(alice).some((m) => m.content === 'hey alice' && !m.fromSelf));
+
+    // Calling: Alice starts a call, her browser is asked to open the voice page, Bob is notified.
+    alice.post({ type: 'joinVoice', conversationId: `dm:${bobId}` });
+    await waitFor(() => alice.state?.voice.call?.title === 'Call with Bob');
+    await waitFor(() => alice.opened.length === 1);
+    expect(alice.opened[0]).toMatch(/^http:\/\/127\.0\.0\.1:425\d\d\/#token=[A-Za-z0-9_-]{20,}$/);
+    await waitFor(() => bob.notifications.includes('Alice is calling you'));
+    await waitFor(() => conversation(bob, 'Alice')?.inCallCount === 1);
+    expect(bob.state!.active?.voice).toMatchObject({ joined: false, others: ['Alice'], canJoin: true });
+    alice.post({ type: 'leaveVoice' });
+    await waitFor(() => alice.state?.voice.call === null && conversation(bob, 'Alice')?.inCallCount === 0);
 
     alice.post({ type: 'closeConversation' });
     bob.post({ type: 'closeConversation' });

@@ -1,3 +1,4 @@
+import { CallBar } from './components/CallBar';
 import { ConversationView } from './components/ConversationView';
 import { Home } from './components/Home';
 import { post, useExtensionState } from './hooks/useExtensionMessages';
@@ -16,8 +17,10 @@ export function App() {
           </button>
         </div>
       )}
+      {state.voice.unavailable && <div className="call-warning">{state.voice.unavailable}</div>}
+      <CallBar voice={state.voice} />
       {state.active ? (
-        <ConversationView key={state.active.id} conversation={state.active} />
+        <ConversationView key={state.active.id} conversation={state.active} globalCall={state.voice.call} />
       ) : (
         <Home state={state} />
       )}

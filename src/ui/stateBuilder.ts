@@ -17,9 +17,11 @@ import type {
   JoinRequestView,
   MemberView,
   PeerView,
+  ConversationVoiceView,
   PublicGroupView,
   SharingView,
   UiState,
+  VoiceView,
 } from './ipcTypes';
 
 export interface StateSources {
@@ -34,7 +36,25 @@ export interface StateSources {
   member: GroupMember;
   /** Workspace-sharing details for a group conversation. */
   sharingFor?: (groupId: string, isHost: boolean) => SharingView | null;
+  /** Voice call details for a conversation. */
+  voiceFor?: (kind: 'dm' | 'group', key: string) => { inCallCount: number; view: ConversationVoiceView };
+  voice?: VoiceView;
   error: string | null;
+}
+
+const NO_VOICE: VoiceView = {
+  call: null,
+  pageConnected: false,
+  mic: 'unknown',
+  micMessage: null,
+  muted: false,
+  selfSpeaking: false,
+  participants: [],
+  unavailable: null,
+};
+
+function voiceOf(s: StateSources, kind: 'dm' | 'group', key: string) {
+  return s.voiceFor?.(kind, key) ?? { inCallCount: 0, view: { joined: false, others: [], canJoin: false } };
 }
 
 const ENDED_TEXT: Record<GroupEndReason, string> = {
@@ -88,6 +108,7 @@ function hostedSummary(s: StateSources, g: HostedGroupView): ConversationSummary
     lastActivity: s.store.lastActivity(id),
     ended: null,
     isHost: true,
+    inCallCount: voiceOf(s, 'group', g.groupId).inCallCount,
   };
 }
 
@@ -103,6 +124,7 @@ function joinedSummary(s: StateSources, g: JoinedGroup): ConversationSummary {
     lastActivity: s.store.lastActivity(id),
     ended: g.ended ? ENDED_TEXT[g.ended] : null,
     isHost: false,
+    inCallCount: g.ended ? 0 : voiceOf(s, 'group', g.groupId).inCallCount,
   };
 }
 
@@ -117,6 +139,7 @@ function dmSummary(s: StateSources, peerId: string): ConversationSummary {
     lastActivity: s.store.lastActivity(id),
     ended: null,
     isHost: false,
+    inCallCount: voiceOf(s, 'dm', peerId).inCallCount,
   };
 }
 
@@ -162,6 +185,7 @@ function detail(s: StateSources, id: ConversationId, summary: ConversationSummar
     joinRequests: [],
     invitable: [],
     sharing: null,
+    voice: voiceOf(s, parsed.kind, parsed.key).view,
   };
   if (parsed.kind === 'dm') {
     return { ...base, peerId: parsed.key, canSend: s.peers.isConnected(parsed.key) };
@@ -226,6 +250,7 @@ export function buildUiState(s: StateSources): UiState {
     publicGroups,
     invitations: s.member.pendingInvitations().map((i) => ({ ...i })),
     joinRequests: joinRequestViews(s),
+    voice: s.voice ?? NO_VOICE,
     error: s.error,
   };
 }
