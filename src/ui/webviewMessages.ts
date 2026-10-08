@@ -14,7 +14,16 @@ export function parseFromWebview(raw: unknown): FromWebview | undefined {
     case 'ready':
     case 'dismissError':
     case 'closeConversation':
+    case 'stopSharing':
+    case 'openSharedFiles':
       return { type: m.type };
+    case 'startSharing':
+    case 'mountShared':
+      return str(m.groupId) ? { type: m.type, groupId: m.groupId } : undefined;
+    case 'setCanEdit':
+      return str(m.peerId) && bool(m.canEdit) ? { type: 'setCanEdit', peerId: m.peerId, canEdit: m.canEdit } : undefined;
+    case 'followPeer':
+      return str(m.groupId) && str(m.peerId) ? { type: 'followPeer', groupId: m.groupId, peerId: m.peerId } : undefined;
     case 'connect':
     case 'disconnect':
     case 'startDm':

@@ -17,9 +17,67 @@ const log = (level) => (msg, ...args) => {
   if (process.env.BEACONBOB_TEST_VERBOSE) process.stderr.write(`[${process.env.BEACONBOB_DISPLAY_NAME}] ${level} ${msg} ${args.join(' ')}\n`);
 };
 
+const event = () => () => disposable;
+
+class EventEmitter {
+  constructor() {
+    this.listeners = new Set();
+    this.event = (fn) => {
+      this.listeners.add(fn);
+      return { dispose: () => this.listeners.delete(fn) };
+    };
+  }
+  fire(value) {
+    for (const fn of this.listeners) fn(value);
+  }
+  dispose() {
+    this.listeners.clear();
+  }
+}
+
+class Disposable {
+  constructor(fn) {
+    this.fn = fn;
+  }
+  static from(...items) {
+    return new Disposable(() => items.forEach((i) => i.dispose()));
+  }
+  dispose() {
+    this.fn?.();
+  }
+}
+
 const vscode = {
-  Uri: { joinPath: (base, ...parts) => uri(path.join(base.fsPath, ...parts)) },
+  Uri: {
+    joinPath: (base, ...parts) => uri(path.join(base.fsPath, ...parts)),
+    file: (p) => uri(p),
+    from: ({ scheme, authority, path: p }) => ({ scheme, authority, path: p, toString: () => `${scheme}://${authority}${p}` }),
+  },
+  EventEmitter,
+  Disposable,
+  FileChangeType: { Changed: 1, Created: 2, Deleted: 3 },
+  FileType: { File: 1, Directory: 2 },
+  FilePermission: { Readonly: 1 },
+  FileSystemError: {
+    FileNotFound: (m) => new Error(String(m)),
+    Unavailable: (m) => new Error(String(m)),
+    NoPermissions: (m) => new Error(String(m)),
+    FileIsADirectory: (m) => new Error(String(m)),
+    FileNotADirectory: (m) => new Error(String(m)),
+  },
+  MarkdownString: class {
+    constructor(value) {
+      this.value = value;
+    }
+  },
   window: {
+    registerTreeDataProvider: () => disposable,
+    onDidChangeTextEditorSelection: event(),
+    onDidChangeActiveTextEditor: event(),
+    onDidChangeVisibleTextEditors: event(),
+    visibleTextEditors: [],
+    activeTextEditor: undefined,
+    createTextEditorDecorationType: () => ({ dispose() {} }),
     createOutputChannel: () => ({ debug: log('debug'), info: log('info'), warn: log('warn'), error: log('error'), show() {}, dispose() {} }),
     showWarningMessage: async (message, options, ...items) => {
       send('prompt', { message, detail: options?.detail, items });
@@ -41,11 +99,17 @@ const vscode = {
       return disposable;
     },
   },
-  commands: { registerCommand: () => disposable },
+  commands: { registerCommand: () => disposable, executeCommand: async () => undefined },
   workspace: {
     name: `${process.env.BEACONBOB_DISPLAY_NAME}-workspace`,
+    workspaceFolders: undefined,
+    textDocuments: [],
     getConfiguration: () => ({ get: (key) => (key === 'portRange' ? process.env.BEACONBOB_TEST_PORTS : undefined) }),
     onDidChangeConfiguration: () => disposable,
+    registerFileSystemProvider: () => disposable,
+    onDidOpenTextDocument: event(),
+    onDidCloseTextDocument: event(),
+    onDidChangeTextDocument: event(),
   },
 };
 

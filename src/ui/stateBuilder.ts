@@ -18,6 +18,7 @@ import type {
   MemberView,
   PeerView,
   PublicGroupView,
+  SharingView,
   UiState,
 } from './ipcTypes';
 
@@ -31,6 +32,8 @@ export interface StateSources {
   store: ConversationStore;
   host: GroupHost;
   member: GroupMember;
+  /** Workspace-sharing details for a group conversation. */
+  sharingFor?: (groupId: string, isHost: boolean) => SharingView | null;
   error: string | null;
 }
 
@@ -158,6 +161,7 @@ function detail(s: StateSources, id: ConversationId, summary: ConversationSummar
     members: [],
     joinRequests: [],
     invitable: [],
+    sharing: null,
   };
   if (parsed.kind === 'dm') {
     return { ...base, peerId: parsed.key, canSend: s.peers.isConnected(parsed.key) };
@@ -172,6 +176,7 @@ function detail(s: StateSources, id: ConversationId, summary: ConversationSummar
       members: members(s, hosted.members, s.identity.peerId),
       joinRequests: joinRequestViews(s).filter((r) => r.groupId === hosted.groupId),
       invitable: invitable(s, hosted),
+      sharing: s.sharingFor?.(hosted.groupId, true) ?? null,
     };
   }
   const joined = s.member.group(parsed.key);
@@ -181,6 +186,7 @@ function detail(s: StateSources, id: ConversationId, summary: ConversationSummar
     visibility: joined?.visibility ?? null,
     canSend: !!joined && !joined.ended && s.peers.isConnected(joined.hostId),
     members: joined ? members(s, joined.members, joined.hostId) : [],
+    sharing: joined && !joined.ended ? (s.sharingFor?.(parsed.key, false) ?? null) : null,
   };
 }
 

@@ -4,6 +4,7 @@ import { post } from '../hooks/useExtensionMessages';
 import { ChatPanel } from './ChatPanel';
 import { MemberList } from './MemberList';
 import { JoinRequestCard } from './Rows';
+import { SharingPanel } from './SharingPanel';
 
 export function ConversationView({ conversation }: { conversation: ConversationDetail }) {
   const [showMembers, setShowMembers] = useState(false);
@@ -52,6 +53,8 @@ export function ConversationView({ conversation }: { conversation: ConversationD
       )}
 
       {ended && <div className="notice">{ended}</div>}
+
+      {groupId && conversation.sharing && <SharingPanel groupId={groupId} sharing={conversation.sharing} />}
 
       {conversation.joinRequests.map((r) => (
         <JoinRequestCard key={r.peerId} request={r} />

@@ -4,6 +4,8 @@ import { post } from '../hooks/useExtensionMessages';
 export function MemberList({ conversation }: { conversation: ConversationDetail }) {
   const { groupId, isHost, members, invitable } = conversation;
   if (!groupId) return null;
+  const sharingActive = isHost && !!conversation.sharing?.active;
+  const editors = new Set(conversation.sharing?.editors ?? []);
 
   return (
     <div className="panel">
@@ -18,6 +20,16 @@ export function MemberList({ conversation }: { conversation: ConversationDetail 
               </span>
               <span className="fingerprint small">{m.fingerprint}</span>
             </span>
+            {sharingActive && !m.isSelf && (
+              <label className="can-edit" title="Let this member edit your shared files">
+                <input
+                  type="checkbox"
+                  checked={editors.has(m.peerId)}
+                  onChange={(e) => post({ type: 'setCanEdit', peerId: m.peerId, canEdit: e.target.checked })}
+                />{' '}
+                Can edit
+              </label>
+            )}
             {isHost && !m.isSelf && (
               <button className="secondary" onClick={() => post({ type: 'removeMember', groupId, peerId: m.peerId })}>
                 Remove

@@ -15,6 +15,7 @@ import { PeerManager } from './transport/peerManager';
 import type { FromWebview } from './ui/ipcTypes';
 import { buildUiState } from './ui/stateBuilder';
 import { SidebarProvider } from './ui/webviewProvider';
+import { SharingController } from './vscode/sharingController';
 import { type Log, scoped } from './util/logger';
 import { getLocalAddresses, parsePortRange, type PortRange } from './util/network';
 
@@ -120,6 +121,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   host = groupHost;
   const member = new GroupMember({ peers, store, identity, getSelfName: displayName, log: scoped(log, 'groups') });
   const chat = new ChatService({ peers, store, selfId: identity.peerId, getSelfName: displayName });
+  const sharing = new SharingController({
+    peers,
+    groupHost,
+    member,
+    identity,
+    displayName,
+    log,
+    onChange: () => refresh(),
+  });
 
   const server = new SignalServer({
     identity,
@@ -167,6 +177,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       store,
       host: groupHost,
       member,
+      sharingFor: (groupId, isHost) => sharing.view(groupId, isHost),
       error: lastError,
     });
 
@@ -280,6 +291,34 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       case 'removeMember':
         groupHost.remove(msg.groupId, msg.peerId);
         break;
+      case 'startSharing':
+        lastError = null;
+        sharing.startSharing(msg.groupId).catch((err: unknown) => fail((err as Error).message));
+        break;
+      case 'stopSharing':
+        sharing.stopSharing();
+        break;
+      case 'setCanEdit':
+        sharing.setCanEdit(msg.peerId, msg.canEdit);
+        break;
+      case 'openSharedFiles':
+        void sharing.openSharedFiles();
+        break;
+      case 'mountShared':
+        try {
+          sharing.mount(msg.groupId);
+        } catch (err) {
+          fail((err as Error).message);
+        }
+        break;
+      case 'followPeer':
+        sharing.follow(msg.groupId, msg.peerId).then(
+          (ok) => {
+            if (!ok) fail('They are not in a shared file right now.');
+          },
+          (err: unknown) => fail(`Could not open their file: ${(err as Error).message}`),
+        );
+        break;
     }
   };
 
@@ -354,6 +393,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (pick) peers.disconnect(pick.peerId);
     }),
     vscode.commands.registerCommand('beaconbob.showLogs', () => channel.show()),
+    vscode.commands.registerCommand('beaconbob.stopSharing', () => {
+      if (!sharing.host.active) {
+        void vscode.window.showInformationMessage('You are not sharing your workspace.');
+        return;
+      }
+      sharing.stopSharing();
+    }),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('beaconbob.displayName')) {
         mdns.updateProfile(mdnsProfile());
@@ -368,7 +414,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   shutdown = async () => {
     shutdown = undefined;
     for (const off of unsubscribe) off();
-    // Hosted groups are closed first so members hear about it before the sockets go.
+    // Sharing and hosted groups are wound down first so members hear about it before the
+    // sockets go.
+    sharing.dispose();
     groupHost.dispose();
     member.dispose();
     chat.dispose();

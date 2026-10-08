@@ -1,7 +1,7 @@
 {
   "name": "beaconbob",
   "displayName": "BeaconBob",
-  "description": "Zero-cloud LAN pair programming: peer discovery, chat, and (soon) voice and shared editing, entirely inside your local network.",
+  "description": "Zero-cloud LAN pair programming: peer discovery, chat, groups, and shared editing, entirely inside your local network.",
   "version": "0.1.0",
   "publisher": "beaconbob",
   "license": "UNLICENSED",
@@ -13,7 +13,9 @@
     "Other"
   ],
   "main": "./dist/extension.js",
-  "activationEvents": [],
+  "activationEvents": [
+    "onFileSystem:beaconbob"
+  ],
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -30,6 +32,11 @@
           "type": "webview",
           "id": "beaconbob.sidebar",
           "name": "Session"
+        },
+        {
+          "id": "beaconbob.sharedFiles",
+          "name": "Shared files",
+          "when": "beaconbob.hasSharedFiles"
         }
       ]
     },
@@ -48,6 +55,11 @@
         "command": "beaconbob.showLogs",
         "title": "Show Logs",
         "category": "BeaconBob"
+      },
+      {
+        "command": "beaconbob.stopSharing",
+        "title": "Stop Sharing Workspace",
+        "category": "BeaconBob"
       }
     ],
     "configuration": {
@@ -63,6 +75,22 @@
           "default": "42520-42560",
           "pattern": "^\\d{1,5}-\\d{1,5}$",
           "description": "TCP port range used by the local signaling server, as 'min-max'."
+        },
+        "beaconbob.sharing.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            ".git/",
+            "node_modules/",
+            ".env",
+            ".env.*",
+            "*.pem",
+            "*.key",
+            "id_rsa*"
+          ],
+          "description": "Gitignore-style patterns hidden from guests when you share your workspace (in addition to the root .gitignore)."
         }
       }
     }
@@ -75,12 +103,17 @@
     "watch:webview": "vite build --config webview-ui/vite.config.mts --watch",
     "typecheck": "tsc -p . --noEmit && tsc -p webview-ui --noEmit",
     "test": "vitest run",
+    "test:vscode": "node test/vscode/run.mjs",
     "package": "npm run build && npx --yes @vscode/vsce package --no-dependencies --allow-missing-repository --skip-license -o beaconbob.vsix",
     "vscode:prepublish": "npm run build"
   },
   "dependencies": {
     "bonjour-service": "^1.4.4",
-    "ws": "^8.22.0"
+    "ignore": "^7.0.12",
+    "lib0": "^0.2.119",
+    "ws": "^8.22.0",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.33"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

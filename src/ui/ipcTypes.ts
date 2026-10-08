@@ -70,7 +70,34 @@ export interface InvitableView {
   invited: boolean;
 }
 
+export interface ParticipantView {
+  peerId: string;
+  name: string;
+  color: string;
+  /** Shared-relative path of the file they are in, if any. */
+  activeFile: string | null;
+}
+
+export interface SharingView {
+  /** Whether a workspace is being shared with this group right now. */
+  active: boolean;
+  rootName: string | null;
+  isHost: boolean;
+  hostName: string;
+  /** Guests: whether you may edit. Host: always true. */
+  canEdit: boolean;
+  /** Peer ids the host has granted edit access. */
+  editors: string[];
+  participants: ParticipantView[];
+  /** Host only: why sharing cannot start here, if it cannot. */
+  cannotShareReason: string | null;
+  /** Guests: "Open in Explorer" needs a folder already open in this window. */
+  canMount: boolean;
+}
+
 export interface ConversationDetail extends ConversationSummary {
+  /** Workspace sharing for this group (null for direct messages). */
+  sharing: SharingView | null;
   messages: ChatMessageView[];
   typing: string[];
   canSend: boolean;
@@ -129,4 +156,10 @@ export type FromWebview =
   | { type: 'respondJoinRequest'; groupId: string; peerId: string; accept: boolean }
   | { type: 'leaveGroup'; groupId: string }
   | { type: 'closeGroup'; groupId: string }
-  | { type: 'removeMember'; groupId: string; peerId: string };
+  | { type: 'removeMember'; groupId: string; peerId: string }
+  | { type: 'startSharing'; groupId: string }
+  | { type: 'stopSharing' }
+  | { type: 'setCanEdit'; peerId: string; canEdit: boolean }
+  | { type: 'openSharedFiles' }
+  | { type: 'mountShared'; groupId: string }
+  | { type: 'followPeer'; groupId: string; peerId: string };
