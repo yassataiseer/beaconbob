@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "BeaconBob: Alice",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--user-data-dir=${workspaceFolder}/.vscode-test/alice/user-data",
+        "--extensions-dir=${workspaceFolder}/.vscode-test/alice/extensions",
+        "--new-window"
+      ],
+      "env": { "BEACONBOB_DISPLAY_NAME": "Alice" },
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+    },
+    {
+      "name": "BeaconBob: Bob",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--user-data-dir=${workspaceFolder}/.vscode-test/bob/user-data",
+        "--extensions-dir=${workspaceFolder}/.vscode-test/bob/extensions",
+        "--new-window"
+      ],
+      "env": { "BEACONBOB_DISPLAY_NAME": "Bob" },
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "BeaconBob: Alice + Bob",
+      "configurations": ["BeaconBob: Alice", "BeaconBob: Bob"],
+      "preLaunchTask": "npm: build",
+      "stopAll": true
+    }
+  ]
+}

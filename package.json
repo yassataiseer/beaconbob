@@ -1,0 +1,99 @@
+{
+  "name": "beaconbob",
+  "displayName": "BeaconBob",
+  "description": "Zero-cloud LAN pair programming: peer discovery, chat, and (soon) voice and shared editing, entirely inside your local network.",
+  "version": "0.1.0",
+  "publisher": "beaconbob",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "beaconbob",
+          "title": "BeaconBob",
+          "icon": "media/beacon.svg"
+        }
+      ]
+    },
+    "views": {
+      "beaconbob": [
+        {
+          "type": "webview",
+          "id": "beaconbob.sidebar",
+          "name": "Session"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "beaconbob.connect",
+        "title": "Connect to Peer",
+        "category": "BeaconBob"
+      },
+      {
+        "command": "beaconbob.disconnect",
+        "title": "Disconnect from Peer",
+        "category": "BeaconBob"
+      },
+      {
+        "command": "beaconbob.showLogs",
+        "title": "Show Logs",
+        "category": "BeaconBob"
+      }
+    ],
+    "configuration": {
+      "title": "BeaconBob",
+      "properties": {
+        "beaconbob.displayName": {
+          "type": "string",
+          "default": "",
+          "description": "Name shown to other peers on the LAN. Defaults to your OS user name."
+        },
+        "beaconbob.portRange": {
+          "type": "string",
+          "default": "42520-42560",
+          "pattern": "^\\d{1,5}-\\d{1,5}$",
+          "description": "TCP port range used by the local signaling server, as 'min-max'."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "npm run build:ext && npm run build:webview",
+    "build:ext": "node esbuild.mjs",
+    "build:webview": "vite build --config webview-ui/vite.config.mts",
+    "watch:ext": "node esbuild.mjs --watch",
+    "watch:webview": "vite build --config webview-ui/vite.config.mts --watch",
+    "typecheck": "tsc -p . --noEmit && tsc -p webview-ui --noEmit",
+    "test": "vitest run",
+    "package": "npm run build && npx --yes @vscode/vsce package --no-dependencies --allow-missing-repository --skip-license -o beaconbob.vsix",
+    "vscode:prepublish": "npm run build"
+  },
+  "dependencies": {
+    "bonjour-service": "^1.4.4",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/vscode": "~1.90.0",
+    "@types/ws": "^8.18.2",
+    "@vitejs/plugin-react": "^6.1.2",
+    "esbuild": "^0.28.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  }
+}
